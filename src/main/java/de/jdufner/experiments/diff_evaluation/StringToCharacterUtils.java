@@ -6,7 +6,7 @@ import java.util.List;
 
 public class StringToCharacterUtils {
 
-  public static List<Character> stringAsCharacterList(final String s) {
+  public static List<Character> stringToCharacterList(final String s) {
     if (s == null || s.isEmpty()) {
       return Collections.<Character> emptyList();
     }

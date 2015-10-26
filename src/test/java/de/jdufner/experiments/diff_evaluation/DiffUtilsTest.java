@@ -22,15 +22,15 @@ public class DiffUtilsTest {
 
   @Test
   public void testCharacterList1() {
-    Patch<Character> patch = DiffUtils.diff(StringToCharacterUtils.stringAsCharacterList(s1),
-        StringToCharacterUtils.stringAsCharacterList(s2));
+    Patch<Character> patch = DiffUtils.diff(StringToCharacterUtils.stringToCharacterList(s1),
+        StringToCharacterUtils.stringToCharacterList(s2));
     System.out.println("Compare Characters: " + patch.getDeltas());
   }
 
   @Test
   public void testCharacterList2() {
-    Patch<Character> patch = DiffUtils.diff(StringToCharacterUtils.stringAsCharacterList(s1),
-        StringToCharacterUtils.stringAsCharacterList(s2));
+    Patch<Character> patch = DiffUtils.diff(StringToCharacterUtils.stringToCharacterList(s1),
+        StringToCharacterUtils.stringToCharacterList(s2));
     printOriginal(patch);
     System.out.println("##########");
     printRevised(patch);
