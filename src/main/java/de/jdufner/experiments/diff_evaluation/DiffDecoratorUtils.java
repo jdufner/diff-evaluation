@@ -8,8 +8,13 @@ import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
 
-public class HtmlDiffUtils {
+public class DiffDecoratorUtils {
 
+  /**
+   * It's better to use {@link String} constants as default values?
+   *
+   * @author Jürgen
+   */
   public enum HtmlTag {
 
     OPEN("<span class=\"diff\">"), CLOSE("</span>");
@@ -25,6 +30,11 @@ public class HtmlDiffUtils {
     }
   }
 
+  /**
+   * Is replacement by {@link StringBuilder} possible?
+   *
+   * @author Jürgen
+   */
   private static class CharacterContainer {
     private final Character c;
     private final HtmlTag t;
@@ -191,16 +201,11 @@ public class HtmlDiffUtils {
 
   }
 
-  private static class ExpectedBuilder extends Builder {
+  private static class ExpectedBuilder extends ActualBuilder {
 
     protected ExpectedBuilder(final String actual, final String expected) {
       super(actual, expected);
       text = StringToCharacterUtils.stringToCharacterList(expected);
-    }
-
-    @Override
-    protected List<Character> getText() {
-      return text;
     }
 
     @Override
@@ -217,22 +222,22 @@ public class HtmlDiffUtils {
 
     @Override
     protected boolean isFirst(final int i) {
-      return i == getText().size() - 1;
+      return super.isLast(i);
     }
 
     @Override
     protected boolean isLast(final int i) {
-      return i == 0;
+      return super.isFirst(i);
     }
 
     @Override
     protected void doAddOpeningTag() {
-      ccList.add(new CharacterContainer(null, HtmlTag.CLOSE));
+      super.doAddClosingTag();
     }
 
     @Override
     protected void doAddClosingTag() {
-      ccList.add(new CharacterContainer(null, HtmlTag.OPEN));
+      super.doAddOpeningTag();
     }
 
     @Override
