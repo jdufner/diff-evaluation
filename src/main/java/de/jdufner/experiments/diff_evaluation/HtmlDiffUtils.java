@@ -25,11 +25,11 @@ public class HtmlDiffUtils {
     }
   }
 
-  public static class CharacterContainer {
+  private static class CharacterContainer {
     private final Character c;
     private final HtmlTag t;
 
-    public CharacterContainer(final Character c, final HtmlTag t) {
+    private CharacterContainer(final Character c, final HtmlTag t) {
       if ((c == null && t == null) || (c != null && t != null)) {
         throw new IllegalStateException("Exactly one of both parameters must be null.");
       }
@@ -44,90 +44,216 @@ public class HtmlDiffUtils {
       }
       return t.getText();
     }
-
   }
 
-  public static String buildActualAsHtml(final String actual, final String expected) {
-    Patch<Character> patch = DiffUtils.diff(StringToCharacterUtils.stringToCharacterList(actual),
-        StringToCharacterUtils.stringToCharacterList(expected));
-    List<CharacterContainer> ccList = new LinkedList<CharacterContainer>();
-    boolean isDelta = false;
-    for (int i = 0; i < actual.length(); i++) {
-      Delta<Character> delta = getOriginalDeltaByIndex(patch, i);
+  private static abstract class Builder {
+    protected final Patch<Character> patch;
+    protected final List<CharacterContainer> ccList = new LinkedList<CharacterContainer>();
+    protected boolean isDelta = false;
+    protected List<Character> text;
+
+    protected Builder(final String actual, final String expected) {
+      this.patch = DiffUtils.diff(StringToCharacterUtils.stringToCharacterList(actual),
+          StringToCharacterUtils.stringToCharacterList(expected));
+    }
+
+    protected String build() {
+      iterate();
+      return buildString();
+    }
+
+    protected abstract List<Character> getText();
+
+    protected abstract void iterate();
+
+    protected abstract Chunk<Character> getChunk(Delta<Character> d);
+
+    protected abstract boolean isFirst(int i);
+
+    protected abstract boolean isLast(int i);
+
+    protected abstract void doAddOpeningTag();
+
+    protected abstract void doAddClosingTag();
+
+    protected abstract String buildString();
+
+    protected void addElement(final int i) {
+      Delta<Character> delta = getDeltaByIndex(i, patch);
+      addOpeningTagIfNecessary(i, delta);
       if (delta == null) {
         if (isDelta) {
-          isDelta = false;
-          ccList.add(new CharacterContainer(null, HtmlTag.CLOSE));
+          addClosingTag();
         }
-        ccList.add(new CharacterContainer(actual.charAt(i), null));
+        ccList.add(new CharacterContainer(getText().get(i), null));
       } else {
         if (!isDelta) {
-          isDelta = true;
-          ccList.add(new CharacterContainer(null, HtmlTag.OPEN));
+          addOpeningTag();
         }
-        ccList.add(new CharacterContainer(getByIndex(delta.getOriginal(), i), null));
+        ccList.add(new CharacterContainer(getByIndex(getChunk(delta), i), null));
+      }
+      addClosingTagIfNecessary(i, delta);
+    }
+
+    private void addClosingTagIfNecessary(final int i, final Delta<Character> delta) {
+      if (delta != null && isLast(i)) {
+        addClosingTag();
       }
     }
-    StringBuilder sb = new StringBuilder(ccList.size());
-    for (CharacterContainer cc : ccList) {
-      sb.append(cc.toString());
-    }
-    return sb.toString();
-  }
 
-  public static String buildExpectedAsHtml(final String actual, final String expected) {
-    Patch<Character> patch = DiffUtils.diff(StringToCharacterUtils.stringToCharacterList(actual),
-        StringToCharacterUtils.stringToCharacterList(expected));
-    List<CharacterContainer> ccList = new LinkedList<CharacterContainer>();
-    boolean isDelta = false;
-    for (int i = expected.length() - 1; i >= 0; i--) {
-      Delta<Character> delta = getRevisedDeltaByIndex(patch, i);
-      if (delta == null) {
-        if (isDelta) {
-          isDelta = false;
-          ccList.add(new CharacterContainer(null, HtmlTag.OPEN));
+    private void addClosingTag() {
+      isDelta = false;
+      doAddClosingTag();
+    }
+
+    private void addOpeningTagIfNecessary(final int i, final Delta<Character> delta) {
+      if (delta != null && isFirst(i)) {
+        addOpeningTag();
+      }
+    }
+
+    private void addOpeningTag() {
+      isDelta = true;
+      doAddOpeningTag();
+    }
+
+    private Delta<Character> getDeltaByIndex(final int i, final Patch<Character> patch) {
+      for (Delta<Character> delta : patch.getDeltas()) {
+        if (isInChunk(getChunk(delta), i)) {
+          return delta;
         }
-        ccList.add(new CharacterContainer(expected.charAt(i), null));
-      } else {
-        if (!isDelta) {
-          isDelta = true;
-          ccList.add(new CharacterContainer(null, HtmlTag.CLOSE));
-        }
-        ccList.add(new CharacterContainer(getByIndex(delta.getRevised(), i), null));
+      }
+      return null;
+    }
+
+    private boolean isInChunk(final Chunk<Character> chunk, final int i) {
+      return i >= chunk.getPosition() && i < chunk.getPosition() + chunk.size();
+    }
+
+    private Character getByIndex(final Chunk<Character> chunk, final int i) {
+      int j = i - chunk.getPosition();
+      return chunk.getLines().get(j);
+    }
+  }
+
+  private static class ActualBuilder extends Builder {
+
+    protected ActualBuilder(final String actual, final String expected) {
+      super(actual, expected);
+      text = StringToCharacterUtils.stringToCharacterList(actual);
+    }
+
+    @Override
+    protected List<Character> getText() {
+      return text;
+    }
+
+    @Override
+    protected void iterate() {
+      for (int i = 0; i < getText().size(); i++) {
+        addElement(i);
       }
     }
-    StringBuilder sb = new StringBuilder(ccList.size());
-    for (CharacterContainer cc : ccList) {
-      sb.insert(0, cc.toString());
+
+    @Override
+    protected Chunk<Character> getChunk(final Delta<Character> d) {
+      return d.getOriginal();
     }
-    return sb.toString();
+
+    @Override
+    protected boolean isFirst(final int i) {
+      return i == 0;
+    }
+
+    @Override
+    protected boolean isLast(final int i) {
+      return i == getText().size() - 1;
+    }
+
+    @Override
+    protected void doAddOpeningTag() {
+      ccList.add(new CharacterContainer(null, HtmlTag.OPEN));
+    }
+
+    @Override
+    protected void doAddClosingTag() {
+      ccList.add(new CharacterContainer(null, HtmlTag.CLOSE));
+    }
+
+    @Override
+    protected String buildString() {
+      StringBuilder sb = new StringBuilder(ccList.size());
+      for (CharacterContainer cc : ccList) {
+        sb.append(cc.toString());
+      }
+      return sb.toString();
+    }
+
   }
 
-  private static Delta<Character> getOriginalDeltaByIndex(final Patch<Character> patch, final int i) {
-    for (Delta<Character> d : patch.getDeltas()) {
-      if (isInChunk(d.getOriginal(), i)) {
-        return d;
+  private static class ExpectedBuilder extends Builder {
+
+    protected ExpectedBuilder(final String actual, final String expected) {
+      super(actual, expected);
+      text = StringToCharacterUtils.stringToCharacterList(expected);
+    }
+
+    @Override
+    protected List<Character> getText() {
+      return text;
+    }
+
+    @Override
+    protected void iterate() {
+      for (int i = getText().size() - 1; i >= 0; i--) {
+        addElement(i);
       }
     }
-    return null;
-  }
 
-  private static Delta<Character> getRevisedDeltaByIndex(final Patch<Character> patch, final int i) {
-    for (Delta<Character> d : patch.getDeltas()) {
-      if (isInChunk(d.getRevised(), i)) {
-        return d;
-      }
+    @Override
+    protected Chunk<Character> getChunk(final Delta<Character> d) {
+      return d.getRevised();
     }
-    return null;
+
+    @Override
+    protected boolean isFirst(final int i) {
+      return i == getText().size() - 1;
+    }
+
+    @Override
+    protected boolean isLast(final int i) {
+      return i == 0;
+    }
+
+    @Override
+    protected void doAddOpeningTag() {
+      ccList.add(new CharacterContainer(null, HtmlTag.CLOSE));
+    }
+
+    @Override
+    protected void doAddClosingTag() {
+      ccList.add(new CharacterContainer(null, HtmlTag.OPEN));
+    }
+
+    @Override
+    protected String buildString() {
+      StringBuilder sb = new StringBuilder(ccList.size());
+      for (CharacterContainer cc : ccList) {
+        sb.insert(0, cc.toString());
+      }
+      return sb.toString();
+    }
+
   }
 
-  private static boolean isInChunk(final Chunk<Character> chunk, final int i) {
-    return i >= chunk.getPosition() && i < chunk.getPosition() + chunk.size();
+  public static String buildActual(final String actual, final String expected) {
+    Builder ab = new ActualBuilder(actual, expected);
+    return ab.build();
   }
 
-  private static Character getByIndex(final Chunk<Character> chunk, final int i) {
-    int j = i - chunk.getPosition();
-    return chunk.getLines().get(j);
+  public static String buildExpected(final String actual, final String expected) {
+    Builder eb = new ExpectedBuilder(actual, expected);
+    return eb.build();
   }
 
 }
