@@ -6,31 +6,14 @@ import org.junit.Test;
 public class DiffDecoratorUtilsTest {
 
   @Test
-  public void test1() {
-    String actual = "Hello Silvia!";
-    String expected = "Hello Jürgen!";
-    String htmlDiff = null;
-    htmlDiff = DiffDecoratorUtils.buildActual(actual, expected);
-    // System.out.println(htmlDiff);
-    Assert.assertEquals("Hello <span class=\"diff\">Silvia</span>!", htmlDiff);
-    htmlDiff = DiffDecoratorUtils.buildExpected(actual, expected);
-    // System.out.println(htmlDiff);
-    Assert.assertEquals("Hello <span class=\"diff\">Jürgen</span>!", htmlDiff);
-  }
-
-  @Test
-  public void test2() {
+  public void testHelloWorld() {
     String actual = "Hello World!";
     String expected = "Hallo Welt!";
     String htmlDiff = null;
     htmlDiff = DiffDecoratorUtils.buildActual(actual, expected);
-    // System.out.println(htmlDiff);
-    Assert.assertEquals("H<span class=\"diff\">e</span>llo W<span class=\"diff\">or</span>l<span class=\"diff\">d</span>!",
-        htmlDiff);
+    Assert.assertEquals("H[e]llo W[or]l[d]!", htmlDiff);
     htmlDiff = DiffDecoratorUtils.buildExpected(actual, expected);
-    // System.out.println(htmlDiff);
-    Assert.assertEquals("H<span class=\"diff\">a</span>llo W<span class=\"diff\">e</span>l<span class=\"diff\">t</span>!",
-        htmlDiff);
+    Assert.assertEquals("H[a]llo W[e]l[t]!", htmlDiff);
   }
 
   @Test
@@ -39,11 +22,9 @@ public class DiffDecoratorUtilsTest {
     String expected = "xyz";
     String htmlDiff = null;
     htmlDiff = DiffDecoratorUtils.buildActual(actual, expected);
-    // System.out.println(htmlDiff);
-    Assert.assertEquals("<span class=\"diff\">abc</span>", htmlDiff);
+    Assert.assertEquals("[abc]", htmlDiff);
     htmlDiff = DiffDecoratorUtils.buildExpected(actual, expected);
-    // System.out.println(htmlDiff);
-    Assert.assertEquals("<span class=\"diff\">xyz</span>", htmlDiff);
+    Assert.assertEquals("[xyz]", htmlDiff);
   }
 
   @Test
@@ -52,11 +33,9 @@ public class DiffDecoratorUtilsTest {
     String expected = "axc";
     String htmlDiff = null;
     htmlDiff = DiffDecoratorUtils.buildActual(actual, expected);
-    // System.out.println(htmlDiff);
-    Assert.assertEquals("a<span class=\"diff\">b</span>c", htmlDiff);
+    Assert.assertEquals("a[b]c", htmlDiff);
     htmlDiff = DiffDecoratorUtils.buildExpected(actual, expected);
-    // System.out.println(htmlDiff);
-    Assert.assertEquals("a<span class=\"diff\">x</span>c", htmlDiff);
+    Assert.assertEquals("a[x]c", htmlDiff);
   }
 
   @Test
@@ -65,11 +44,9 @@ public class DiffDecoratorUtilsTest {
     String expected = "xbc";
     String htmlDiff = null;
     htmlDiff = DiffDecoratorUtils.buildActual(actual, expected);
-    // System.out.println(htmlDiff);
-    Assert.assertEquals("<span class=\"diff\">a</span>bc", htmlDiff);
+    Assert.assertEquals("[a]bc", htmlDiff);
     htmlDiff = DiffDecoratorUtils.buildExpected(actual, expected);
-    // System.out.println(htmlDiff);
-    Assert.assertEquals("<span class=\"diff\">x</span>bc", htmlDiff);
+    Assert.assertEquals("[x]bc", htmlDiff);
   }
 
   @Test
@@ -78,11 +55,22 @@ public class DiffDecoratorUtilsTest {
     String expected = "abx";
     String htmlDiff = null;
     htmlDiff = DiffDecoratorUtils.buildActual(actual, expected);
-    // System.out.println(htmlDiff);
-    Assert.assertEquals("ab<span class=\"diff\">c</span>", htmlDiff);
+    Assert.assertEquals("ab[c]", htmlDiff);
     htmlDiff = DiffDecoratorUtils.buildExpected(actual, expected);
-    // System.out.println(htmlDiff);
-    Assert.assertEquals("ab<span class=\"diff\">x</span>", htmlDiff);
+    Assert.assertEquals("ab[x]", htmlDiff);
+  }
+
+  @Test
+  public void testBuilder() {
+    String actual = "Hello Silvia!";
+    String expected = "Hello Jürgen!";
+    String htmlDiff = null;
+    htmlDiff = new DiffDecoratorUtils.ActualBuilder(actual, expected).setOpeningTag("<span class=\"diff\">")
+        .setClosingTag("</span>").build();
+    Assert.assertEquals("Hello <span class=\"diff\">Silvia</span>!", htmlDiff);
+    htmlDiff = new DiffDecoratorUtils.ExpectedBuilder(actual, expected).setOpeningTag("<span class=\"diff\">")
+        .setClosingTag("</span>").build();
+    Assert.assertEquals("Hello <span class=\"diff\">Jürgen</span>!", htmlDiff);
   }
 
 }
