@@ -1,6 +1,9 @@
 package de.jdufner.experiments.diff_evaluation;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -22,15 +25,13 @@ public class DiffUtilsTest {
 
   @Test
   public void testCharacterList1() {
-    Patch<Character> patch = DiffUtils.diff(StringToCharacterUtils.stringToCharacterList(s1),
-        StringToCharacterUtils.stringToCharacterList(s2));
+    Patch<Character> patch = DiffUtils.diff(stringToCharacterList(s1), stringToCharacterList(s2));
     System.out.println("Compare Characters: " + patch.getDeltas());
   }
 
   @Test
   public void testCharacterList2() {
-    Patch<Character> patch = DiffUtils.diff(StringToCharacterUtils.stringToCharacterList(s1),
-        StringToCharacterUtils.stringToCharacterList(s2));
+    Patch<Character> patch = DiffUtils.diff(stringToCharacterList(s1), stringToCharacterList(s2));
     printOriginal(patch);
     System.out.println("##########");
     printRevised(patch);
@@ -85,6 +86,17 @@ public class DiffUtilsTest {
   private Character getByIndex(final Chunk<Character> chunk, final int i) {
     int j = i - chunk.getPosition();
     return chunk.getLines().get(j);
+  }
+
+  private static List<Character> stringToCharacterList(final String s) {
+    if (s == null || s.isEmpty()) {
+      return Collections.<Character> emptyList();
+    }
+    List<Character> characterList = new ArrayList<Character>(s.length());
+    for (char c : s.toCharArray()) {
+      characterList.add(c);
+    }
+    return characterList;
   }
 
 }

@@ -1,5 +1,7 @@
 package de.jdufner.experiments.diff_evaluation;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import difflib.Chunk;
@@ -18,8 +20,7 @@ public class DiffDecoratorUtils {
     protected String closingTag = "]";
 
     protected Builder(final String actual, final String expected) {
-      this.patch = DiffUtils.diff(StringToCharacterUtils.stringToCharacterList(actual),
-          StringToCharacterUtils.stringToCharacterList(expected));
+      this.patch = DiffUtils.diff(stringToCharacterList(actual), stringToCharacterList(expected));
     }
 
     public Builder setOpeningTag(final String openingTag) {
@@ -121,13 +122,24 @@ public class DiffDecoratorUtils {
       return i == getText().size() - 1;
     }
 
+    protected List<Character> stringToCharacterList(final String s) {
+      if (s == null || s.isEmpty()) {
+        return Collections.<Character> emptyList();
+      }
+      List<Character> characterList = new ArrayList<Character>(s.length());
+      for (char c : s.toCharArray()) {
+        characterList.add(c);
+      }
+      return characterList;
+    }
+
   }
 
   public static class ActualBuilder extends Builder {
 
     public ActualBuilder(final String actual, final String expected) {
       super(actual, expected);
-      text = StringToCharacterUtils.stringToCharacterList(actual);
+      text = stringToCharacterList(actual);
     }
 
     @Override
@@ -141,7 +153,7 @@ public class DiffDecoratorUtils {
 
     public ExpectedBuilder(final String actual, final String expected) {
       super(actual, expected);
-      text = StringToCharacterUtils.stringToCharacterList(expected);
+      text = stringToCharacterList(expected);
     }
 
     @Override
