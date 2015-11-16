@@ -11,7 +11,10 @@ import difflib.Patch;
 
 public class DiffDecoratorUtils {
 
-  public static abstract class Builder {
+  private DiffDecoratorUtils() {
+  }
+
+  public abstract static class Builder {
     protected List<Character> text;
     protected final Patch<Character> patch;
     protected final StringBuilder stringBuilder = new StringBuilder();
